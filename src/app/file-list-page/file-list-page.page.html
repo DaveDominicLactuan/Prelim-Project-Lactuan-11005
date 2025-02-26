@@ -1,0 +1,28 @@
+
+
+<ion-header>
+  <ion-toolbar>
+    <ion-title>File List</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <h2>Total Files: {{ fileCount }}</h2>
+
+  <ion-list>
+    <ion-item *ngFor="let file of fileList">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ file }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-button color="primary" (click)="goToHome(file)">Read File</ion-button>
+          <ion-button color="danger" (click)="deleteFile(file)">Delete File</ion-button>
+        </ion-card-content>
+      </ion-card>
+    </ion-item>
+  </ion-list>
+
+  <ion-button expand="full" (click)="listFiles()">Refresh File List</ion-button>
+  <ion-button expand="full" (click)="goToHome2()">Back to Home</ion-button>
+</ion-content>

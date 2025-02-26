@@ -1,0 +1,45 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>File Manager</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item>
+    <ion-label position="floating">File Name</ion-label>
+    <ion-input [(ngModel)]="fileName"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="floating">File Content</ion-label>
+    <ion-textarea [(ngModel)]="fileContent"></ion-textarea>
+  </ion-item>
+
+  <ion-button expand="full" (click)="createFile()">Create File</ion-button>
+  <ion-button expand="full" (click)="readFile()">Read File</ion-button>
+  <ion-button expand="full" (click)="deleteFile()"> Delete File</ion-button>
+  <ion-button expand="full" (click)="goToFileListPage()">Go to File List Page</ion-button>
+  <ion-button expand="full" (click)="listFiles()">Refresh File List</ion-button>
+
+
+  
+
+  <ion-list>
+    <ion-item *ngFor="let file of fileList">
+      {{ file }}
+    </ion-item>
+  </ion-list>
+
+  <ion-content class="ion-padding">
+    <h2>Editing: {{ fileName }}</h2>
+  
+    <ion-item>
+      <ion-label position="floating">File Content</ion-label>
+      <ion-textarea [(ngModel)]="fileContent"></ion-textarea>
+    </ion-item>
+  
+    <ion-button expand="full" color="success" (click)="saveFile()">Save Changes</ion-button>
+    <ion-button expand="full" color="medium" (click)="goBack()">Go Back</ion-button>
+  </ion-content>
+
+</ion-content>
