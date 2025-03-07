@@ -1,0 +1,19 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>
+      Blank
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Buttons to trigger camera actions -->
+  <ion-button expand="full" (click)="takePicture()">Take a Picture</ion-button>
+  <ion-button expand="full" (click)="selectFromGallery()">Choose from Gallery</ion-button>
+  <ion-button expand="full" (click)="takeAndEditPicture()">Take & Edit Picture</ion-button>
+
+  <!-- Display the captured image -->
+  <ion-card *ngIf="imageurl"> 
+    <ion-img [src]="imageurl"></ion-img>
+  </ion-card>
+</ion-content>
