@@ -1,0 +1,7 @@
+{
+  "name": "appPreferences",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

@@ -1,0 +1,14 @@
+<ion-app>
+  <ion-router-outlet></ion-router-outlet>
+</ion-app>
+
+<ion-header> Application Settings</ion-header>
+<ion-toggle [(ngmodel)]="toggle1" (ion-change)="saveToggle('toggle1', $event)">Option 1 </ion-toggle><br /><br />
+<ion-toggle [(ngmodel)]="toggle2" (ion-change)="saveToggle('toggle2', $event)">Option 2 </ion-toggle><br /><br />
+<ion-toggle [(ngmodel)]="toggle3" (ion-change)="saveToggle('toggle3', $event)">Option 3 </ion-toggle><br /><br />
+<ion-range [(ngmodel)]="rangeValue" (ion-change)="saveRange('rangeValue', $event)" labelPlacement="fixed" label="Fixed Width Label"></ion-range>
+<ion-checkbox [(ngmodel)]="checkbox1" (ion-change)="saveCheckbox('checkbox1', $event)" labelPlacement="end">Checkbox 1</ion-checkbox>
+<ion-checkbox [(ngmodel)]="checkbox2" (ion-change)="saveCheckbox('checkbox2', $event)" labelPlacement="end">Checkbox 2</ion-checkbox>
+<ion-checkbox [(ngmodel)]="checkbox3" (ion-change)="saveCheckbox('checkbox3', $event)" labelPlacement="end">Checkbox 3</ion-checkbox>
+<ion-checkbox [(ngmodel)]="radioOption1" (ion-change)="saveCheckbox('radioOption1', $event)" labelPlacement="end">Radio Option 1</ion-checkbox>
+<ion-checkbox [(ngmodel)]="radioOption1" (ion-change)="saveCheckbox('radioOption1', $event)" labelPlacement="end">Radio Option 2</ion-checkbox>
