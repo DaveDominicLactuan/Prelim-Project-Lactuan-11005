@@ -7,6 +7,8 @@ import { catchError, tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class WeatherService {
+  //  private apiKey = 'GcwhDESM9BLEaPgc67XQC6a27RuHsf9y'
+  
   private apiKey = '8iDFfkDVn4KqnCYrfIb7Ypj8MJQjedG8'; 
 //  private apiKey = ''; 
   private baseUrl = 'https://dataservice.accuweather.com/forecasts/v1/hourly/1hour';

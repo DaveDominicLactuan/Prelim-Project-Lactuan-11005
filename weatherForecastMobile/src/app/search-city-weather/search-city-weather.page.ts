@@ -71,6 +71,7 @@ export class SearchCityWeatherPage {
     maxTempF?: number;
     windSpeed?: number | null;
     humidity?: number | null;
+    cityName?: String;
   } = {};
 
 
@@ -80,21 +81,39 @@ export class SearchCityWeatherPage {
 
     this.loadSavedWeather();
 
-    console.log('value of humidity is', this.savedWeatherData.humidity)
+   
+    const cachedCityName = await this.loadCityName();
+  
 
-    this.humidity = Number(this.savedWeatherData.humidity);
-    this.windSpeed = Number(this.savedWeatherData.windSpeed);
-    this.temperatureC = Number(this.savedWeatherData.temperatureC);
-    this.temperatureF = Number(this.savedWeatherData.temperatureF);
-    this.minTempC = Number(this.savedWeatherData.minTempC);
-    this.maxTempC = Number(this.savedWeatherData.maxTempC);
-    this.minTempF = Number(this.savedWeatherData.minTempF);
-    this.maxTempF = Number(this.savedWeatherData.maxTempF);
 
-    console.log('value of saved humidity is', this.savedWeatherData.humidity, 'value of saved humidity is', this.savedWeatherData.windSpeed);
-    console.log('value of saved max Temperature C is', this.savedWeatherData.maxTempC, 'value of saved min Temperature C is', this.savedWeatherData.minTempC);
-    console.log('value of saved max Temperature f is', this.savedWeatherData.maxTempF, 'value of saved min Temperature F is', this.savedWeatherData.minTempF);
+    if (cachedCityName) {
+      this.renderTwelveHourForecast(cachedCityName); // <- same here
+    }
+  
+  
+    const cachedCity = await this.loadCityName();
 
+    if (cachedCity) {
+      this.cityName = cachedCity;
+  
+      if (navigator.onLine) {
+        this.getWeather(); // Live data
+      } else {
+        const cachedWeather = await this.loadWeatherData();
+        if (cachedWeather) {
+          this.temperatureC = cachedWeather.temperatureC;
+          this.temperatureF = cachedWeather.temperatureF;
+          this.windSpeed = cachedWeather.windSpeed;
+          this.humidity = cachedWeather.humidity;
+          this.minTempC = cachedWeather.minTempC;
+          this.maxTempC = cachedWeather.maxTempC;
+          this.minTempF = cachedWeather.minTempF;
+          this.maxTempF = cachedWeather.maxTempF;
+        } else {
+          this.errorMessage = 'No cached weather data available.';
+        }
+      }
+    }
 
               
     const cachedFiveDay = await this.loadFiveDayForecast();
@@ -129,18 +148,20 @@ export class SearchCityWeatherPage {
         },
         {
           text: 'Search',
-          handler: (data) => {
+          handler: async (data) => {
             if (data.city?.trim()) {
               this.cityName = data.city.trim();
-              this.getWeather(); // 🔥 Call the weather function
+              await this.saveCityName(this.cityName); // ✅ Save it!
+              this.getWeather(); // 🔥 Call weather fetch
             }
           },
         },
       ],
     });
-
+  
     await alert.present();
   }
+  
 
   getWeather() {
     this.isLoading = true;
@@ -158,6 +179,8 @@ export class SearchCityWeatherPage {
         // this.addDiv1(locationKey);
         // this.addDiv2(locationKey);
 
+        this.savedWeatherData.cityName = this.cityName
+
         // ✅ Get Current Conditions
         this.weatherService.getCurrentConditions(locationKey).subscribe({
           next: (weatherRes) => {
@@ -167,7 +190,7 @@ export class SearchCityWeatherPage {
               this.temperatureF = weather.Temperature.Imperial.Value;
               this.humidity = weather.RelativeHumidity;
               this.windSpeed = weather.Wind.Speed.Metric.Value;
-
+      
               this.savedWeatherData.temperatureC = this.temperatureC;
               this.savedWeatherData.temperatureF = this.temperatureF;
               this.savedWeatherData.windSpeed = this.windSpeed;
@@ -179,22 +202,23 @@ export class SearchCityWeatherPage {
             this.errorMessage = 'Failed to fetch current conditions.';
           }
         });
-
-        // ✅ Get Forecast for Min/Max Temperature
+      
         this.weatherService.getWeatherForecast(locationKey).subscribe({
-          next: (forecastRes) => {
+          next: async (forecastRes) => {
             const daily = forecastRes.DailyForecasts?.[0];
             if (daily) {
               this.minTempF = daily.Temperature.Minimum.Value;
               this.maxTempF = daily.Temperature.Maximum.Value;
-
               this.minTempC = this.convertToCelsius(this.minTempF);
               this.maxTempC = this.convertToCelsius(this.maxTempF);
-
+      
               this.savedWeatherData.minTempC = this.minTempC;
               this.savedWeatherData.maxTempC = this.maxTempC;
               this.savedWeatherData.minTempF = this.minTempF;
               this.savedWeatherData.maxTempF = this.maxTempF;
+      
+              // ✅ Save all weather data after everything is available
+              await this.saveWeatherData(this.savedWeatherData);
             }
             this.isLoading = false;
           },
@@ -212,6 +236,7 @@ export class SearchCityWeatherPage {
           async (data: any) => {
             console.log('5-Day Forecast:', data);
             await this.saveFiveDayForecast(data);
+            
 
             this.renderFiveDayForecast(data);
 
@@ -234,10 +259,11 @@ export class SearchCityWeatherPage {
           (error) => console.error('Error fetching 12-hour forecast:', error)
         );
 
-        Preferences.set({
-          key: 'weatherData',
-          value: JSON.stringify(this.savedWeatherData)
-        });
+        async (weatherData: any) => {
+          await this.saveWeatherData(weatherData);
+        }
+
+        
 
       },
       error: (err) => {
@@ -471,6 +497,36 @@ async loadTwelveHourForecast(): Promise<any | null> {
   return value ? JSON.parse(value) : null;
 }
 
+async saveWeatherData(data: any) {
+  await Preferences.set({
+    key: 'weatherData',
+    value: JSON.stringify(data)
+  });
+}
+
+
+
+async loadWeatherData(): Promise<any | null> {
+  const { value } = await Preferences.get({ key: 'weatherData' });
+  return value ? JSON.parse(value) : null;
+}
+
+
+
+async saveCityName(cityName: string) {
+  await Preferences.set({
+    key: 'CityName',
+    value: JSON.stringify(cityName)
+  });
+}
+
+async loadCityName(): Promise<string | null> {
+  const { value } = await Preferences.get({ key: 'CityName' });
+  return value ? JSON.parse(value) : null;
+}
+
+
+
 renderFiveDayForecast(data: any) {
   if (data && data.DailyForecasts) {
     data.DailyForecasts.forEach((day: any, index: number) => {
@@ -517,7 +573,7 @@ renderFiveDayForecast(data: any) {
       // Style the div
       this.renderer.setStyle(newDiv, 'height', '120px'); // Increased height to accommodate image
       this.renderer.setStyle(newDiv, 'padding', '10px');
-      this.renderer.setStyle(newDiv, 'backgroundColor', 'lightblue');
+      this.renderer.setStyle(newDiv, 'backgroundColor', 'rgb(16, 2, 206)');
       this.renderer.setStyle(newDiv, 'marginBottom', '5px');
       this.renderer.setStyle(newDiv, 'marginTop', '5px');
       this.renderer.setStyle(newDiv, 'borderRadius', '8px');
@@ -585,7 +641,7 @@ renderTwelveHourForecast(hourlyData: any) {
         // Style the div
         this.renderer.setStyle(newDiv, 'height', '150px'); // Adjusted height to fit image
         this.renderer.setStyle(newDiv, 'padding', '10px');
-        this.renderer.setStyle(newDiv, 'backgroundColor', 'lightblue');
+        this.renderer.setStyle(newDiv, 'backgroundColor', 'rgb(16, 2, 206)');
         this.renderer.setStyle(newDiv, 'margin', '5px');
         this.renderer.setStyle(newDiv, 'borderRadius', '8px');
         this.renderer.setStyle(newDiv, 'textAlign', 'center');
@@ -613,184 +669,5 @@ async loadSavedWeather() {
 }
 
 
-
-
-
-  // ngOnInit() {
-
-  // }
-  // async ngOnInit() {
-  //   await this.presentAlert();
-  // }
-
-  // searchCity() {
-  //   console.log('Searching for city:', this.cityName);
-  //   if (!this.cityName.trim()) {
-  //     console.warn('City name is empty!');
-  //     return;
-  //   }
-
-  //   this.isLoading = true;
-  //   this.weatherService.getCitySuggestion(this.cityName).subscribe(
-  //     (data) => {
-  //       console.log('City Suggestions:', data);
-  //       this.searchResults = data;
-  //       this.isLoading = false;
-  //     },
-  //     (error) => {
-  //       console.error('Error fetching city suggestions:', error);
-  //       this.isLoading = false;
-  //     }
-  //   );
-
-    
-  // }
-
-  // selectCity(city: string) {
-  //   this.selectedCity = city; // ✅ Store selected city
-  //   console.log('Selected City:', this.selectedCity);
-  
-  //   this.isLoading = true;
-  //   this.weatherService.getLocationKey(this.selectedCity).subscribe(
-  //     data => {
-  //       if (data.length > 0) {
-  //         this.locationDataLocationKey = data[0].Key;
-  //         console.log('Location Key:', this.locationDataLocationKey);
-  
-  //         if (this.locationDataLocationKey) {
-  //           const locationKey: string = this.locationDataLocationKey; // ✅ Ensure it's a string
-  
-  //           // Fetch weather forecast
-  //           this.weatherService.getWeatherForecast(locationKey).subscribe(
-  //             (weatherData) => {
-  //               this.weatherData = weatherData; // ✅ Store full weather data object
-  //               console.log('Weather Data:', this.weatherData);
-                
-  //               // Fetch current weather conditions
-  //               this.weatherService.getCurrentConditions(locationKey).subscribe(
-  //                 (conditionData: any) => {
-  //                   this.weatherCondition = conditionData[0]; // ✅ Store weather condition
-  //                   console.log('Current Weather Condition:', this.weatherCondition);
-  //                 },
-  //                 (error) => console.error('Error fetching current conditions:', error)
-  //               );
-
-  //               this.weatherService.getWeatherForecastFiveDays(locationKey).subscribe(
-  //                 (weatherData) => {
-  //                   this.weatherDataFive = weatherData; // ✅ Store full weather data object
-  //                   console.log('Weather Data Five:', this.weatherDataFive);
-  //                 }
-  //               )
-
-  //               if (this.locationDataLocationKey) {
-  //                 this.weatherService.getWeatherForecast12Hour(this.locationDataLocationKey).subscribe(
-  //                     (weatherData) => {
-  //                         this.weatherData24 = weatherData; 
-  //                         console.log('Weather Data 12:', this.weatherData24);
-  //                     },
-  //                     (error) => console.error('Error fetching 12-hour forecast:', error)
-  //                 );
-  //             } else {
-  //                 console.warn('Invalid location key for fetching 12-hour forecast.');
-  //             }
-              
-  //             },
-  //             (error) => console.error('Error fetching weather data:', error)
-  //           );
-  //         }
-  //       } else {
-  //         console.warn('No matching city found.');
-  //       }
-  
-  //       this.searchResults = data;
-  //       this.isLoading = false;
-  //     },
-  //     error => {
-  //       console.error('Error fetching city data', error);
-  //       this.isLoading = false;
-  //     }
-  //   );
-  // }
-  
-  // searchCityLocationKey(cityName: string) {
-  //   if (!cityName.trim()) return;
-
-  //   this.isLoading = true;
-  //   this.weatherService.getLocationKey(cityName).subscribe(
-  //     data => {
-  //       if (data.length > 0) {
-  //         this.locationDataLocationKey = data[0].Key;
-  //         console.log('Location Key:', this.locationDataLocationKey);
-  //       } else {
-  //         console.warn('No matching city found.');
-  //       }
-
-  //       this.searchResults = data;
-  //       this.isLoading = false;
-  //     },
-  //     error => {
-  //       console.error('Error fetching city data', error);
-  //       this.isLoading = false;
-  //     }
-  //   );
-  // }  
-
-  
-  // navigateToSecondPage() {
-  //   this.router.navigate(['/home']);
-  // }
-
-  // async presentAlert() {
-  //   const alert = await this.alertController.create({
-  //     header: 'Please enter your info',
-  //     inputs: [
-  //       {
-  //         name: 'CityName',
-  //         type: 'text',
-  //         placeholder: 'Enter City Name'
-  //       }
-  //     ],
-  //     buttons: [
-  //       {
-  //         text: 'Cancel',
-  //         role: 'cancel'
-  //       },
-  //       {
-  //         text: 'Submit',
-  //         handler: (data) => {
-  //           console.log('User data:', data);
-  //           this.AlertStoreCityName = data.CityName.trim();
-  //           this.searchCityAlert()
-            
-  //         }
-  //       }
-  //     ]
-  //   });
-
-  //   await alert.present();
-  // }
-
-  // searchCityAlert() {
-  //   console.log('Searching for city alert:', this.AlertStoreCityName);
-  //   if (!this.AlertStoreCityName.trim()) {
-  //     console.warn('City name is empty!');
-  //     return;
-  //   }
-
-  //   this.isLoading = true;
-  //   this.weatherService.getCitySuggestion(this.AlertStoreCityName).subscribe(
-  //     (data) => {
-  //       console.log('City Suggestions:', data);
-  //       this.searchResults = data;
-  //       this.isLoading = false;
-  //     },
-  //     (error) => {
-  //       console.error('Error fetching city suggestions:', error);
-  //       this.isLoading = false;
-  //     }
-  //   );
-
-    
-  // }
 
 }

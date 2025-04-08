@@ -92,27 +92,29 @@ export class HomePage {
 
 
     this.loadSavedWeather();
+
+    if (!navigator.onLine) {
+      const cachedData = await this.loadWeatherData();
+      if (cachedData) {
+        this.temperatureC = cachedData.temperatureC;
+        this.temperatureF = cachedData.temperatureF;
+        this.windSpeed = cachedData.windSpeed;
+        this.humidity = cachedData.humidity;
+        this.minTempC = cachedData.minTempC;
+        this.maxTempC = cachedData.maxTempC;
+        this.minTempF = cachedData.minTempF;
+        this.maxTempF = cachedData.maxTempF;
+        console.log('Loaded weather from cache:', cachedData);
+      } else {
+        this.errorMessage = 'No cached weather data available.';
+      }
+    }
     
-    console.log('value of humidity is', this.savedWeatherData.humidity)
-
-    this.humidity = Number(this.savedWeatherData.humidity);
-    this.windSpeed = Number(this.savedWeatherData.windSpeed);
-    this.temperatureC = Number(this.savedWeatherData.temperatureC);
-    this.temperatureF = Number(this.savedWeatherData.temperatureF);
-    this.minTempC = Number(this.savedWeatherData.minTempC);
-    this.maxTempC = Number(this.savedWeatherData.maxTempC);
-    this.minTempF = Number(this.savedWeatherData.minTempF);
-    this.maxTempF = Number(this.savedWeatherData.maxTempF);
-
-    console.log('value of saved humidity is', this.savedWeatherData.humidity, 'value of saved humidity is', this.savedWeatherData.windSpeed);
-    console.log('value of saved max Temperature C is', this.savedWeatherData.maxTempC, 'value of saved min Temperature C is', this.savedWeatherData.minTempC);
-    console.log('value of saved max Temperature f is', this.savedWeatherData.maxTempF, 'value of saved min Temperature F is', this.savedWeatherData.minTempF);
-
-    
-
+  
               
     const cachedFiveDay = await this.loadFiveDayForecast();
     const cachedTwelveHour = await this.loadTwelveHourForecast();
+   
   
     if (cachedFiveDay) {
       this.renderFiveDayForecast(cachedFiveDay); // <- you need to extract your rendering logic to a method
@@ -121,6 +123,7 @@ export class HomePage {
     if (cachedTwelveHour) {
       this.renderTwelveHourForecast(cachedTwelveHour); // <- same here
     }
+
   
     this.getWeather(); // Automatically run on app load
   
@@ -171,7 +174,7 @@ export class HomePage {
           this.temperatureF = weather.Temperature.Imperial.Value;
           this.humidity = weather.RelativeHumidity;
           this.windSpeed = weather.Wind.Speed.Metric.Value;
-
+  
           this.savedWeatherData.temperatureC = this.temperatureC;
           this.savedWeatherData.temperatureF = this.temperatureF;
           this.savedWeatherData.windSpeed = this.windSpeed;
@@ -183,20 +186,23 @@ export class HomePage {
         this.errorMessage = 'Failed to fetch current conditions.';
       }
     });
-
+  
     this.weatherService.getWeatherForecast(locationKey).subscribe({
-      next: (forecastRes) => {
+      next: async (forecastRes) => {
         const daily = forecastRes.DailyForecasts?.[0];
         if (daily) {
           this.minTempF = daily.Temperature.Minimum.Value;
           this.maxTempF = daily.Temperature.Maximum.Value;
           this.minTempC = this.convertToCelsius(this.minTempF);
           this.maxTempC = this.convertToCelsius(this.maxTempF);
-
+  
           this.savedWeatherData.minTempC = this.minTempC;
           this.savedWeatherData.maxTempC = this.maxTempC;
           this.savedWeatherData.minTempF = this.minTempF;
           this.savedWeatherData.maxTempF = this.maxTempF;
+  
+          // ✅ Save all weather data after everything is available
+          await this.saveWeatherData(this.savedWeatherData);
         }
         this.isLoading = false;
       },
@@ -207,6 +213,8 @@ export class HomePage {
       }
     });
 
+    
+
     this.weatherService.getWeatherForecastFiveDays(locationKey).subscribe(
       // (data: any) => {
       //   console.log('5-Day Forecast:', data);
@@ -214,6 +222,7 @@ export class HomePage {
       async (data: any) => {
         console.log('5-Day Forecast:', data);
         await this.saveFiveDayForecast(data);
+        
 
         this.renderFiveDayForecast(data);
 
@@ -236,10 +245,11 @@ export class HomePage {
       (error) => console.error('Error fetching 12-hour forecast:', error)
     );
 
-    Preferences.set({
-      key: 'weatherData',
-      value: JSON.stringify(this.savedWeatherData)
-    });
+    async (weatherData: any) => {
+      await this.saveWeatherData(this.weatherData);
+    }
+
+    
   }
 
   convertToCelsius(fahrenheit: number): number {
@@ -324,7 +334,23 @@ export class HomePage {
     const { value } = await Preferences.get({ key: 'twelveHourForecast' });
     return value ? JSON.parse(value) : null;
   }
+
+  async saveWeatherData(data: any) {
+    await Preferences.set({
+      key: 'weatherData',
+      value: JSON.stringify(data)
+    });
+  }
   
+  
+
+  async loadWeatherData(): Promise<any | null> {
+    const { value } = await Preferences.get({ key: 'weatherData' });
+    return value ? JSON.parse(value) : null;
+  }
+
+  
+
   renderFiveDayForecast(data: any) {
     if (data && data.DailyForecasts) {
       data.DailyForecasts.forEach((day: any, index: number) => {
@@ -371,7 +397,7 @@ export class HomePage {
         // Style the div
         this.renderer.setStyle(newDiv, 'height', '120px'); // Increased height to accommodate image
         this.renderer.setStyle(newDiv, 'padding', '10px');
-        this.renderer.setStyle(newDiv, 'backgroundColor', 'lightblue');
+        this.renderer.setStyle(newDiv, 'backgroundColor', ' rgb(16, 2, 206)');
         this.renderer.setStyle(newDiv, 'marginBottom', '5px');
         this.renderer.setStyle(newDiv, 'marginTop', '5px');
         this.renderer.setStyle(newDiv, 'borderRadius', '8px');
@@ -439,7 +465,7 @@ export class HomePage {
           // Style the div
           this.renderer.setStyle(newDiv, 'height', '150px'); // Adjusted height to fit image
           this.renderer.setStyle(newDiv, 'padding', '10px');
-          this.renderer.setStyle(newDiv, 'backgroundColor', 'lightblue');
+          this.renderer.setStyle(newDiv, 'backgroundColor', 'rgb(16, 2, 206)');
           this.renderer.setStyle(newDiv, 'margin', '5px');
           this.renderer.setStyle(newDiv, 'borderRadius', '8px');
           this.renderer.setStyle(newDiv, 'textAlign', 'center');
