@@ -1,4 +1,4 @@
-<!-- <ion-header [translucent]="true">
+<ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
       Blank
@@ -17,53 +17,4 @@
     <strong>Ready to create an app?</strong>
     <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
   </div>
-
-  <ion-progress-bar [value]="timer$ | async" [buffer]="buffer"></ion-progress-bar> 
-
-  <ion-list *ngFor="let post of posts">
-    <span>{{initTimer(post.remainingSeconds)}}</span>
-</ion-list>
-</ion-content> -->
-
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Pomodoro Timer</ion-title>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content class="ion-padding">
-  <h1>{{ minutes }}:{{ seconds | number: '2.0' }}</h1>
-  <ion-button (click)="startTimer()">
-    Start Timer
-  </ion-button>
 </ion-content>
-
-<!-- <ion-item>
-  <ion-datetime min="2021" max={{currentDate}} displayFormat= "DD/MM/YYYY  h:mm A" 
-    [(ngModel)]="chosenDate"></ion-datetime>
-  </ion-item> -->
-  <p> Current date is {{currentDate}}</p>
-  <!-- <p> Chosen date is {{chosenDate}}</p> -->
-
-  <ion-datetime-button datetime="datetime"></ion-datetime-button>
-<!-- 
-<ion-modal [keepContentsMounted]="true">
-  <ng-template>
-    <ion-datetime
-      id="datetime"
-      presentation="date-time"
-      value="2023-11-02T01:22:00"
-      [formatOptions]="{
-        date: {
-          weekday: 'short',
-          month: 'long',
-          day: '2-digit',
-        },
-        time: {
-          hour: '2-digit',
-          minute: '2-digit',
-        },
-      }"
-    ></ion-datetime>
-  </ng-template>
-</ion-modal> -->

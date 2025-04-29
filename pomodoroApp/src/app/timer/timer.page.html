@@ -1,0 +1,39 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>PomodoroApp</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding" fullscreen>
+  <div class="timer-container">
+    <svg height="200" width="200" class="progress-ring">
+      <circle
+        class="progress-ring__circle"
+        stroke="blue"
+        stroke-width="10"
+        fill="transparent"
+        r="90"
+        cx="100"
+        cy="100"
+      />
+    </svg>
+    <div class="time-display">{{ displayTime }}</div>
+    <div class="controls">
+      <ion-button (click)="startTimer()" color="primary" [disabled]="isRunning">Start</ion-button>
+    </div>
+  </div>
+</ion-content>
+
+<!-- <ion-content class="ion-padding">
+  <ion-button expand="block" (click)="requestPermission2()">
+    Request Notification Permission
+  </ion-button>
+
+  <ion-text color="primary">
+    <p *ngIf="permissionStatus">Permission: {{ permissionStatus }}</p>
+  </ion-text>
+
+  <ion-button expand="block" color="success" (click)="sendNotification2()">
+    Send Notification
+  </ion-button>
+</ion-content> -->

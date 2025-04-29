@@ -8,8 +8,12 @@ const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: 'home',
+    redirectTo: 'timer',
     pathMatch: 'full'
+  },
+  {
+    path: 'timer',
+    loadChildren: () => import('./timer/timer.module').then( m => m.TimerPageModule)
   },
 ];
 

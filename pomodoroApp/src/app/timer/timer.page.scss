@@ -1,0 +1,19 @@
+.timer-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.time-display {
+  margin-top: 20px;
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.controls {
+  margin-top: 30px;
+  display: flex;
+  gap: 20px;
+}
